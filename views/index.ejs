@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <hr><br>
+    <form name="room" action="/routes" method="post">
+      <input required type="text" name="room" placeholder="room name"/>
+      <input type="submit" name="submit" value="go the room"/>
+    </form>
+  </body>
+</html>

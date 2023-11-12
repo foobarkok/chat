@@ -1,0 +1,23 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+a {
+  color: #00B7FF;
+}
+
+.hidden {
+  display:none;
+}
+.redline {
+  border-bottom: solid 2px red;
+}
+.space {
+  margin-right: 0.4em;
+}
+.spaceL {
+  margin-right: 0.8em;
+}
+.gray {
+  color: gray;
+}

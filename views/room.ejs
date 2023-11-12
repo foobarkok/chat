@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+      var key = "";
+
+      function setkey(){
+        key = document.forms.keyset['key'].value;
+        if(key == ""){
+          document.getElementById("key label").innerHTML = '<span class="redline">key</span>';
+        }else{
+          document.getElementById("key label").innerHTML = "key";
+        }
+      }
+
+      function encode(data){
+        return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(CryptoJS.AES.encrypt(data, key).toString()));
+      }
+      function decode(data){
+        return CryptoJS.AES.decrypt(CryptoJS.enc.Base64.parse(data).toString(CryptoJS.enc.Utf8), key).toString(CryptoJS.enc.Utf8);
+      }
+
+      function dict2URL(dict){
+        const room = document.getElementById("room").innerHTML;
+        var value = "/routes/?room=" + room + "&";
+        for (var k in dict){
+          value += (k + '=' + encode(dict[k]) + "&");
+        }
+        return value;
+      }
+      function sendData(dict) {
+        const value = dict2URL(dict);
+        document.getElementById("sender").contentWindow.location.replace(value);
+      }
+
+      function send(){
+        if(document.forms.frm['chat'].value == ""){
+          return;
+        }
+        if(key==""){
+          return;
+        }
+        const uname = document.forms.frm['uname'].value;
+        const chat = document.forms.frm['chat'].value;
+        sendData({chat:chat, uname:uname, date:Date()});
+        document.forms.frm['chat'].value = "";
+      }
+
+      function noXSS(text){
+        return text.replace(/&/g, '&lt;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, "&#x27;")
+          .replace(/\n/g, "<br>")
+          .replace(/ /g, '<span class="space"></span>')
+          .replace(/　/g, '<span class="spaceL"></span>');
+      }
+      function json2html(datas){
+        var HTMLtext = "";
+        for(var i=0;i<datas.length;i++){
+          const data = datas[i];
+          if(decode(data["chat"])){
+            HTMLtext = ("<p>" + noXSS(decode(data["chat"])) + '<br><span class="spaceL"></span>ー' + noXSS(decode(data["uname"])) + '<span class="spaceL"></span><span class="gray">(' + noXSS(decode(data["date"])) + ")</span></p>") + HTMLtext;
+          }
+        }
+        return HTMLtext;
+      }
+      function chatReload(){
+        if(key == ""){
+          return;
+        }
+        var loader = document.getElementById("loader").contentWindow;
+        const uname = document.forms.frm['uname'].value;
+        loader.location.replace(dict2URL({uname: uname}));
+        const jsonText = loader.document.body.innerHTML;
+        const jsn = JSON.parse(jsonText);
+        var text = json2html(jsn);
+        if(text == ""){
+          text = "<h2>chat is empty now, <br> or key is bad.</h2>";
+        }
+        if(document.getElementById("chats").innerHTML != text){
+          document.getElementById("chats").innerHTML = text;
+        }
+      }
+      function loop(){
+        chatReload();
+        setTimeout(loop, 100);
+      }
+    </script>
+
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    room: <span id="room"><%= room %></span><br><br>
+    <form name="keyset" action="" method="" onsubmit="return false">
+      <span id="key label"><span class="redline">key</span></span>
+      <input required type="text" name="key" placeholder="key"/>
+      <input type="submit" value="set" onclick="setkey()"><br><hr><br>
+    </form>
+    <form name="frm" action="" method="" onsubmit="return false">
+      <input required type="text" name="uname" placeholder="username" maxlength=10/><br>
+      <input type="text" name="chat" placeholder="hello world." size="70%"/><br>
+      <input type="submit" value="send" onclick="send()"/>
+    </form>
+    <hr>
+    <p id="chats"></p>
+    <span class="hidden">
+      <iframe id="loader"></iframe>
+      <iframe id="sender"></iframe>
+    </span>
+    <script>
+      const room = document.getElementById("room").innerHTML;
+      document.getElementById("loader").contentWindow.location.replace("/routes?room=" + room);
+      loop();
+    </script>
+  </body>
+</html>
